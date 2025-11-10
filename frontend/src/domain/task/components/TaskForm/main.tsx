@@ -1,6 +1,6 @@
 /**
  * @component TaskForm
- * @summary Form component for creating tasks with validation
+ * @summary Form component for creating tasks with validation and category selection
  * @domain task
  * @type domain-component
  * @category form
@@ -11,6 +11,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
 import { useTaskCreate } from '../../hooks/useTaskCreate';
+import { useTaskCategoryAssign } from '@/domain/category/hooks/useTaskCategoryAssign';
+import { CategorySelector } from '@/domain/category/components/CategorySelector';
 import { TaskPriority } from '../../types';
 import type { TaskFormProps, TaskFormData } from './types';
 import { getTaskFormClassName } from './variants';
@@ -31,6 +33,7 @@ export const TaskForm = ({ onSuccess, onCancel, userId, quickMode = false }: Tas
     type: 'success' | 'error' | 'warning';
     text: string;
   } | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const { createTask, isCreating } = useTaskCreate({
     onSuccess: (task, warning) => {
@@ -46,6 +49,7 @@ export const TaskForm = ({ onSuccess, onCancel, userId, quickMode = false }: Tas
         });
       }
       reset();
+      setSelectedCategories([]);
       setTimeout(() => setFeedbackMessage(null), 5000);
       onSuccess?.(task.idTask, warning);
     },
@@ -66,6 +70,8 @@ export const TaskForm = ({ onSuccess, onCancel, userId, quickMode = false }: Tas
     },
   });
 
+  const { assignCategory } = useTaskCategoryAssign();
+
   const {
     register,
     handleSubmit,
@@ -79,13 +85,27 @@ export const TaskForm = ({ onSuccess, onCancel, userId, quickMode = false }: Tas
   });
 
   const onSubmit = async (data: TaskFormData) => {
-    await createTask({
+    const task = await createTask({
       idUser: userId,
       title: data.title,
       description: data.description || null,
       dueDate: data.dueDate || null,
       priority: data.priority,
     });
+
+    if (selectedCategories.length > 0) {
+      for (const categoryId of selectedCategories) {
+        try {
+          await assignCategory({
+            idUser: userId,
+            idTask: task.idTask,
+            idCategory: categoryId,
+          });
+        } catch (error: unknown) {
+          console.error('Error assigning category:', error);
+        }
+      }
+    }
   };
 
   return (
@@ -169,6 +189,14 @@ export const TaskForm = ({ onSuccess, onCancel, userId, quickMode = false }: Tas
                 <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
               )}
             </div>
+
+            <CategorySelector
+              userId={userId}
+              selectedCategories={selectedCategories}
+              onCategoriesChange={setSelectedCategories}
+              maxCategories={10}
+              allowMultiple={true}
+            />
           </>
         )}
 
