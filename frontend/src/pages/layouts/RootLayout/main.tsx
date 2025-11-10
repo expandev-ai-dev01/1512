@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 
 /**
  * @component RootLayout
@@ -8,11 +8,37 @@ import { Outlet } from 'react-router-dom';
  * @category layout
  */
 export const RootLayout = () => {
+  const location = useLocation();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">TODO List</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">TODO List</h1>
+            <nav className="flex gap-4">
+              <Link
+                to="/"
+                className={`px-3 py-2 rounded ${
+                  location.pathname === '/'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Início
+              </Link>
+              <Link
+                to="/tasks"
+                className={`px-3 py-2 rounded ${
+                  location.pathname === '/tasks'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Tarefas
+              </Link>
+            </nav>
+          </div>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
